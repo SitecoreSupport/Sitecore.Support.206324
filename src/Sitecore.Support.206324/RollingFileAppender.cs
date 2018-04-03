@@ -375,17 +375,9 @@
       {
         if (this.m_countDirection < 0)
         {
-          if (this.m_curSizeRollBackups == this.m_maxSizeRollBackups)
-          {
-            this.DeleteFile(this.File + "." + this.m_maxSizeRollBackups);
-            this.m_curSizeRollBackups--;
-          }
-          for (int i = this.m_curSizeRollBackups; i >= 1; i--)
-          {
-            this.RollFile(this.File + "." + i, this.File + "." + (i + 1));
-          }
-          this.m_curSizeRollBackups++;
-          this.RollFile(this.File, this.File + ".1");
+          #region Added code
+          base.m_originalFileName = base.m_originalFileName.Substring(0, base.m_originalFileName.IndexOf(".txt") - 6) + DateTime.Now.ToString("hhmmss") + ".txt";
+          #endregion
         }
         else
         {
@@ -427,13 +419,9 @@
           return;
         }
         base.CloseFile();
-        for (int i = 1; i <= this.m_curSizeRollBackups; i++)
-        {
-          string fromFile = this.File + "." + i;
-          string toFile = this.m_scheduledFilename + "." + i;
-          this.RollFile(fromFile, toFile);
-        }
-        this.RollFile(this.File, this.m_scheduledFilename);
+        #region Added code
+        base.m_originalFileName = base.m_originalFileName.Substring(0, base.m_originalFileName.IndexOf(".txt") - 6) + DateTime.Now.ToString("hhmmss") + ".txt";
+        #endregion
       }
       try
       {
