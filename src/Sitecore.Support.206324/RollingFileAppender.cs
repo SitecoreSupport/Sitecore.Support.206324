@@ -373,28 +373,18 @@
       LogLog.Debug("RollingFileAppender: countDirection [" + this.m_countDirection + "]");
       if (this.m_maxSizeRollBackups != 0)
       {
-        if (this.m_countDirection < 0)
-        {
-          #region Added code
-          base.m_originalFileName = base.m_originalFileName.Substring(0, base.m_originalFileName.IndexOf(".txt") - 6) + DateTime.Now.ToString("hhmmss") + ".txt";
-          #endregion
-        }
-        else
-        {
-          if ((this.m_curSizeRollBackups >= this.m_maxSizeRollBackups) && (this.m_maxSizeRollBackups > 0))
-          {
-            this.DeleteFile(this.File + "." + ((this.m_curSizeRollBackups - this.m_maxSizeRollBackups) + 1));
-          }
-          if (this.m_staticLogFileName)
-          {
-            this.m_curSizeRollBackups++;
-            this.RollFile(this.File, this.File + "." + this.m_curSizeRollBackups);
-          }
-        }
+        #region Added code
+        string appenderName = this.Name;
+        var node = ConfigReader.GetConfigNode("log4net/appender[@name='" + appenderName + "']/file");
+        var value = node.Attributes["value"];
+        string path = value.Value.Substring(value.Value.LastIndexOf('/') + 1).Replace("{date}", DateTime.Now.ToString("yyyymmdd")).Replace("{time}", DateTime.Now.ToString("hhmmss")).Replace("{processid}", GetCurrentProcessId().ToString());
+        path = base.m_originalFileName.Substring(0, base.m_originalFileName.LastIndexOf("\\")) + "\\" + path;
+        base.m_originalFileName = path;
       }
       try
       {
-        this.OpenFile(base.m_originalFileName, false);
+        this.OpenFile(base.m_originalFileName, true);
+        #endregion
       }
       catch (Exception exception)
       {
@@ -419,9 +409,13 @@
           return;
         }
         base.CloseFile();
-        #region Added code
-        base.m_originalFileName = base.m_originalFileName.Substring(0, base.m_originalFileName.IndexOf(".txt") - 6) + DateTime.Now.ToString("hhmmss") + ".txt";
-        #endregion
+        for (int i = 1; i <= this.m_curSizeRollBackups; i++)
+        {
+          string fromFile = this.File + "." + i;
+          string toFile = this.m_scheduledFilename + "." + i;
+          this.RollFile(fromFile, toFile);
+        }
+        this.RollFile(this.File, this.m_scheduledFilename);
       }
       try
       {
